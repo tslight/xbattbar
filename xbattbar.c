@@ -1,10 +1,7 @@
-/*
- * $Id: xbattbar.c,v 1.16.2.4 2001/02/02 05:25:29 suguru Exp $
+/* -*- mode: c; tab-width: 2; c-basic-offset: 2; indent-tabs-mode: nil -*-
+ * vim: set ts=2 sw=2 expandtab:
  *
- * xbattbar: yet another battery watcher for X11
- */
-
-/*
+ * Copyright (c) 2025 Toby Slight <tslight@pm.me>
  * Copyright (c) 1998-2001 Suguru Yamaguchi <suguru@wide.ad.jp>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +20,7 @@
  *
  */
 
-static char *ReleaseVersion="1.4.2";
+static char *ReleaseVersion="1.5.0";
 
 #include <err.h>
 #include <sys/types.h>
@@ -38,7 +35,7 @@ static char *ReleaseVersion="1.4.2";
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
 
-#define PollingInterval 10	/* APM polling interval in sec */
+#define PollingInterval 30	/* APM polling interval in sec */
 #define BI_THICKNESS    3	/* battery indicator thickness in pixels */
 
 #define BI_Bottom	0
@@ -68,7 +65,7 @@ int elapsed_time = 0;
 char remainbuf[32];
 size_t remainbuf_size = sizeof(remainbuf);
 
-int alwaysontop = False;
+int alwaysontop = True;
 
 struct itimerval IntervalTimer;     /* APM polling interval timer */
 
@@ -122,13 +119,12 @@ void usage(char **argv)
   fprintf(stderr,
 	  "\n"
 	  "usage:\t%s [-a] [-h|v] [-p sec] [-t thickness]\n"
-	  "\t\t[-I color] [-O color] [-i color] [-o color]\n"
 	  "\t\t[ top | bottom | left | right ]\n"
-	  "-a:     always on top.\n"
+	  "-a:     always on top. [def: True].\n"
 	  "-v, -h: show this message.\n"
 	  "-t:     bar (indicator) thickness. [def: 3 pixels]\n"
 	  "-p:     polling interval. [def: 10 sec.]\n"
-	  "top, bottom, left, right: bar localtion. [def: \"bottom\"]\n",
+	  "top, bottom, left, right: bar localtion. [def: \"left\"]\n",
 	  argv[0]);
   exit(0);
 }
