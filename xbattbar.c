@@ -370,8 +370,8 @@ void showdiagbox(void)
   XftColor xftcolor;
   XGlyphInfo extents;
 
-  sprintf(diagmsg, "%s: %d%%\n%s", ac_line ? "Charging" : "Discharging",
-	  battery_level, estimate_remain());
+  sprintf(diagmsg, "%s: %d%%", ac_line ? "Charging" : "Discharging",
+	  battery_level);
   xftfont = XftFontOpenName(disp, screen, DiagFont);
   if (!xftfont)
     errx(1, "XftFontOpenName failed for %s", DiagFont);
@@ -483,7 +483,7 @@ void estimate_remain(void)
 
   diff = battery_base - battery_level;
 
-  if (diff == 0) return;ret
+  if (diff == 0) return;
 
   /* estimated time for battery remains */
   if (diff > 0) {
