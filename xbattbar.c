@@ -54,18 +54,22 @@ static char *ReleaseVersion="1.4.2";
 /* default font & time format of dialog window */
 #define DiagFont "monospace:bold:size=18"
 #define TimeFormat "%H:%M %A %d %B %Y"
+#define WarningLevel 10
+#define CriticalLevel 5
 
 /*
  * Global variables
  */
-
 int ac_line = -1;               /* AC line status */
 int battery_level = -1;         /* battery level */
 
 unsigned long onin, onout;      /* indicator colors for AC online */
 unsigned long offin, offout;    /* indicator colors for AC offline */
 
-int elapsed_time = 0;           /* for battery remaining estimation */
+/* for battery remaining estimation */
+int elapsed_time = 0;
+char remainbuf[32];
+size_t remainbuf_size = sizeof(remainbuf);
 
 /* indicator default colors */
 char *ONIN_C   = "green";
@@ -347,7 +351,7 @@ void redraw(void)
   } else {
     battery_proc(battery_level);
   }
-  estimate_remain();
+  if (battery_level < WarningLevel) showdiagbox();
 }
 
 long getcolor(const char *color)
@@ -370,8 +374,10 @@ void showdiagbox(void)
   XftColor xftcolor;
   XGlyphInfo extents;
 
-  sprintf(diagmsg, "%s: %d%%", ac_line ? "Charging" : "Discharging",
-	  battery_level);
+  estimate_remain();
+
+  sprintf(diagmsg, "%s: %d%%%s", ac_line ? "Charging" : "Discharging",
+	  battery_level, remainbuf);
   xftfont = XftFontOpenName(disp, screen, DiagFont);
   if (!xftfont)
     errx(1, "XftFontOpenName failed for %s", DiagFont);
@@ -467,13 +473,13 @@ void plug_proc(int left)
  * estimating time for battery remaining / charging
  */
 
-#define CriticalLevel  5
 
 void estimate_remain(void)
 {
+  if (battery_level > 98) return;
+
   static int battery_base = -1;
-  int diff;
-  int remain;
+  int diff, remain;
 
   /* static value initialize */
   if (battery_base == -1) {
@@ -485,23 +491,23 @@ void estimate_remain(void)
 
   if (diff == 0) return;
 
-  /* estimated time for battery remains */
+  /* estimated time until battery critical */
   if (diff > 0) {
-  remain = elapsed_time * (battery_level - CriticalLevel) / diff ;
-  remain = remain * bi_interval;  /* in sec */
-  if (remain < 0 ) remain = 0;
-  printf("battery remain: %2d hr. %2d min. %2d sec.\n",
-	 remain / 3600, (remain % 3600) / 60, remain % 60);
-  elapsed_time = 0;
-  battery_base = battery_level;
-  return;
-}
+    remain = elapsed_time * (battery_level - CriticalLevel) / diff ;
+    remain = remain * bi_interval;  /* in sec */
+    if (remain < 0 ) remain = 0;
+    snprintf(remainbuf, remainbuf_size, ": %02d:%02d:%02d -> Critical",
+	     remain / 3600, (remain % 3600) / 60, remain % 60);
+    elapsed_time = 0;
+    battery_base = battery_level;
+    return;
+  }
 
-  /* estimated time of battery charging */
+  /* estimated time until battery charged */
   remain = elapsed_time * (battery_level - 100) / diff;
   remain = remain * bi_interval;  /* in sec */
-  printf("charging remain: %2d hr. %2d min. %2d sec.\n",
-	 remain / 3600, (remain % 3600) / 60, remain % 60);
+  snprintf(remainbuf, remainbuf_size, ": %02d:%02d:%02d -> Charged",
+	   remain / 3600, (remain % 3600) / 60, remain % 60);
   elapsed_time = 0;
   battery_base = battery_level;
 }
