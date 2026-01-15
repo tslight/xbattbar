@@ -1,0 +1,4 @@
+xbattbar
+*.o
+*.core
+.ccls-cache
