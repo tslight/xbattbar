@@ -63,19 +63,10 @@ static char *ReleaseVersion="1.4.2";
 int ac_line = -1;               /* AC line status */
 int battery_level = -1;         /* battery level */
 
-unsigned long onin, onout;      /* indicator colors for AC online */
-unsigned long offin, offout;    /* indicator colors for AC offline */
-
 /* for battery remaining estimation */
 int elapsed_time = 0;
 char remainbuf[32];
 size_t remainbuf_size = sizeof(remainbuf);
-
-/* indicator default colors */
-char *ONIN_C   = "green";
-char *ONOUT_C  = "olive drab";
-char *OFFIN_C  = "blue";
-char *OFFOUT_C = "red";
 
 int alwaysontop = False;
 
@@ -92,9 +83,7 @@ int bi_interval = PollingInterval;  /* interval of polling APM */
 Display *disp;
 int screen, dispwidth, dispheight;
 Colormap colormap;
-unsigned long black;
-unsigned long green;
-unsigned long magenta;
+unsigned long black, green, magenta, olive, blue, red;
 Window winbar;                  /* bar indicator window */
 Window winstat = -1;            /* battery status window */
 GC gcbar;
@@ -106,7 +95,6 @@ XEvent theEvent;
  * function prototypes
  */
 void InitDisplay(void);
-Status AllocColor(char *, unsigned long *);
 void battery_check(void);
 void plug_proc(int);
 void battery_proc(int);
@@ -140,27 +128,9 @@ void usage(char **argv)
 	  "-v, -h: show this message.\n"
 	  "-t:     bar (indicator) thickness. [def: 3 pixels]\n"
 	  "-p:     polling interval. [def: 10 sec.]\n"
-	  "-I, -O: bar colors in AC on-line. [def: \"green\" & \"olive drab\"]\n"
-	  "-i, -o: bar colors in AC off-line. [def: \"blue\" and \"red\"]\n"
 	  "top, bottom, left, right: bar localtion. [def: \"bottom\"]\n",
 	  argv[0]);
   exit(0);
-}
-
-/*
- * AllocColor:
- * convert color name to pixel value
- */
-Status AllocColor(char *name, unsigned long *pixel)
-{
-  XColor color,exact;
-  int status;
-
-  status = XAllocNamedColor(disp, DefaultColormap(disp, 0),
-			    name, &color, &exact);
-  *pixel = color.pixel;
-
-  return(status);
 }
 
 /*
@@ -183,21 +153,16 @@ void InitDisplay(void)
   dispwidth  = DisplayWidth(disp, screen);
   dispheight = DisplayHeight(disp, screen);
   colormap   = DefaultColormap(disp, DefaultScreen(disp));
-  black      = getcolor("black");
+  black	     = getcolor("black");
   magenta    = getcolor("magenta");
-  green      = getcolor("green");
+  green	     = getcolor("green");
+  olive	     = getcolor("olive drab");
+  blue	     = getcolor("blue");
+  red        = getcolor("red");
 
   if(XGetGeometry(disp, DefaultRootWindow(disp), &root, &x, &y,
 		  &width, &height, &border, &depth) == 0) {
     fprintf(stderr, "xbattbar: can't get window geometry\n");
-    exit(1);
-  }
-
-  if (!AllocColor(ONIN_C,&onin) ||
-      !AllocColor(OFFOUT_C,&offout) ||
-      !AllocColor(OFFIN_C,&offin) ||
-      !AllocColor(ONOUT_C,&onout)) {
-    fprintf(stderr, "xbattbar: can't allocate color resources\n");
     exit(1);
   }
 
@@ -247,34 +212,18 @@ int main(int argc, char **argv)
   int ch;
 
   about_this_program();
-  while ((ch = getopt(argc, argv, "at:f:hI:i:O:o:p:v")) != -1)
+  while ((ch = getopt(argc, argv, "at:f:h:p:v")) != -1)
     switch (ch) {
     case 'a':
       alwaysontop = True;
       break;
-
     case 't':
     case 'f':
       bi_thick = atoi(optarg);
       break;
-
-    case 'I':
-      ONIN_C = optarg;
-      break;
-    case 'i':
-      OFFIN_C = optarg;
-      break;
-    case 'O':
-      ONOUT_C = optarg;
-      break;
-    case 'o':
-      OFFOUT_C = optarg;
-      break;
-
     case 'p':
       bi_interval = atoi(optarg);
       break;
-
     case 'h':
     case 'v':
       usage(argv);
@@ -434,15 +383,15 @@ void battery_proc(int left)
   int pos;
   if (BI_Horizontal) {
     pos = width * left / 100;
-    XSetForeground(disp, gcbar, offin);
+    XSetForeground(disp, gcbar, blue);
     XFillRectangle(disp, winbar, gcbar, 0, 0, pos, bi_thick);
-    XSetForeground(disp, gcbar, offout);
+    XSetForeground(disp, gcbar, red);
     XFillRectangle(disp, winbar, gcbar, pos, 0, width, bi_thick);
   } else {
     pos = height * left / 100;
-    XSetForeground(disp, gcbar, offin);
+    XSetForeground(disp, gcbar, blue);
     XFillRectangle(disp, winbar, gcbar, 0, height-pos, bi_thick, height);
-    XSetForeground(disp, gcbar, offout);
+    XSetForeground(disp, gcbar, red);
     XFillRectangle(disp, winbar, gcbar, 0, 0, bi_thick, height-pos);
   }
   XFlush(disp);
@@ -451,18 +400,17 @@ void battery_proc(int left)
 void plug_proc(int left)
 {
   int pos;
-
   if (BI_Horizontal) {
     pos = width * left / 100;
-    XSetForeground(disp, gcbar, onin);
+    XSetForeground(disp, gcbar, green);
     XFillRectangle(disp, winbar, gcbar, 0, 0, pos, bi_thick);
-    XSetForeground(disp, gcbar, onout);
+    XSetForeground(disp, gcbar, olive);
     XFillRectangle(disp, winbar, gcbar, pos+1, 0, width, bi_thick);
   } else {
     pos = height * left / 100;
-    XSetForeground(disp, gcbar, onin);
+    XSetForeground(disp, gcbar, green);
     XFillRectangle(disp, winbar, gcbar, 0, height-pos, bi_thick, height);
-    XSetForeground(disp, gcbar, onout);
+    XSetForeground(disp, gcbar, olive);
     XFillRectangle(disp, winbar, gcbar, 0, 0, bi_thick, height-pos);
   }
   XFlush(disp);
