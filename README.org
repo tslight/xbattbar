@@ -1,7 +1,9 @@
 * XBATTBAR FORK
 
-- Added patches from FreeBSD's ports tree
-- Added support for Xft fonts in the dialog box
-- Changed defaults to my personal preferences
-- Added a standard Makefile
-- Fixed some compiler warnings
+- Added patches from FreeBSD's ports tree.
+- Added support for Xft fonts in the dialog box.
+- Show remaining time until charged/critical in dialog box message.
+- Show dialog box if battery level below 10%.
+- Changed defaults to my personal preferences.
+- Added a standard Makefile.
+- Fixed some compiler warnings.
