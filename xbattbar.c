@@ -468,12 +468,6 @@ void plug_proc(int left)
   XFlush(disp);
 }
 
-
-/*
- * estimating time for battery remaining / charging
- */
-
-
 void estimate_remain(void)
 {
   if (battery_level > 98) return;
