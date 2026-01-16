@@ -295,8 +295,8 @@ void redraw(void)
     plug_proc(battery_level);
   } else {
     battery_proc(battery_level);
+    if (battery_level < WarningLevel) showdiagbox();
   }
-  if (battery_level < WarningLevel) showdiagbox();
 }
 
 long getcolor(const char *color)
@@ -414,7 +414,10 @@ void plug_proc(int left)
 
 void estimate_remain(void)
 {
-  if (battery_level > 98) return;
+  if (battery_level > 98 && ac_line) {
+    remainbuf[0] = '\0';
+    return;
+  }
 
   static int battery_base = -1;
   int diff, remain;
@@ -422,6 +425,7 @@ void estimate_remain(void)
   /* static value initialize */
   if (battery_base == -1) {
     battery_base = battery_level;
+    remainbuf[0] = '\0';
     return;
   }
 
